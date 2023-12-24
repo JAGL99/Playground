@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".DetailActivity">
+
+    <LinearLayout
+        android:id="@+id/viewContainer"
+        android:orientation="vertical"
+        app:layout_constraintTop_toTopOf="parent"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <include layout="@layout/view_example_completed"/>
+        <include layout="@layout/view_example_completed"/>
+        <include layout="@layout/view_example_completed"/>
+        <include layout="@layout/view_example_completed"/>
+        <include layout="@layout/view_example_completed"/>
+        <include layout="@layout/view_example_completed"/>
+        <include layout="@layout/view_example_completed"/>
+        <include layout="@layout/view_example_completed"/>
+
+    </LinearLayout>
+
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:layout_width="match_parent"
+        app:shimmer_auto_start="true"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:id="@+id/viewLoading"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <include layout="@layout/view_example_loading"/>
+        <include layout="@layout/view_example_loading"/>
+        <include layout="@layout/view_example_loading"/>
+        <include layout="@layout/view_example_loading"/>
+        <include layout="@layout/view_example_loading"/>
+        <include layout="@layout/view_example_loading"/>
+        <include layout="@layout/view_example_loading"/>
+        <include layout="@layout/view_example_loading"/>
+
+    </LinearLayout>
+
+    </com.facebook.shimmer.ShimmerFrameLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
