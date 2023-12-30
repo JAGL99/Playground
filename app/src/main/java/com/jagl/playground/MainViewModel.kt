@@ -4,7 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.conflate
@@ -255,6 +259,50 @@ class MainViewModel: ViewModel() {
             .collect{ value ->
                 println(value)
             }
+    }
+
+    /**
+     * Stateflow & Sharedflow
+     */
+
+    /**
+     * A mutable StateFlow that provides a setter for value.
+     * An instance of MutableStateFlow with the given initial value can be
+     * created using MutableStateFlow(value) constructor function.
+     */
+    private val _stateFlow = MutableStateFlow(0)
+
+    /**
+     * asStateFlow() -> Represents this mutable state flow as a read-only state flow.
+     */
+    val stateFlow = _stateFlow.asStateFlow()
+
+    fun incrementCounter(){
+        _stateFlow.value += 1
+    }
+
+    private val _sharedFlow = MutableSharedFlow<Int>()
+    val sharedFlow = _sharedFlow.asSharedFlow()
+
+    init {
+        viewModelScope.launch {
+            sharedFlow.collect{
+                delay(2000L)
+                println("First collector: Number is $it")
+            }
+        }
+
+        viewModelScope.launch {
+            sharedFlow.collect{
+                delay(3000L)
+                println("Second collector: Number is $it")
+            }
+        }
+        squareNumber(3)
+    }
+
+    fun squareNumber(number: Int) = viewModelScope.launch{
+        _sharedFlow.emit(number*number)
     }
 
 }
