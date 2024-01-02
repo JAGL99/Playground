@@ -6,11 +6,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.flow.filter
@@ -23,15 +25,16 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.reduce
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class MainViewModel: ViewModel() {
+class MainViewModel : ViewModel() {
 
-    private val countDownFlow = flow<Int>{
+    private val countDownFlow = flow<Int> {
         val startingValue = 5
         var currentValue = startingValue
         emit(currentValue)
-        while (currentValue > 0){
+        while (currentValue > 0) {
             delay(1000L)
             currentValue--
             emit(currentValue)
@@ -42,13 +45,13 @@ class MainViewModel: ViewModel() {
      * Simple Flow operators
      */
 
-    fun collectFlow(observers: (Int)->Unit)= viewModelScope.launch{
+    fun collectFlow(observers: (Int) -> Unit) = viewModelScope.launch {
         countDownFlow
             /**
              * Returns a flow containing only values of the original flow
              * that match the given predicate.
              */
-            .filter {time ->
+            .filter { time ->
                 time % 2 == 0
             }
             /**
@@ -62,20 +65,20 @@ class MainViewModel: ViewModel() {
              * Returns a flow that invokes the given action before
              * each value of the upstream flow is emitted downstream.
              */
-            .onEach {time ->
+            .onEach { time ->
                 println(time)
             }
-            .collect{time ->
-            observers(time)
-        }
+            .collect { time ->
+                observers(time)
+            }
     }
 
-    fun collectFlow2(observers: (Int)->Unit)= countDownFlow.onEach {time ->
+    fun collectFlow2(observers: (Int) -> Unit) = countDownFlow.onEach { time ->
         println("Time in collectFlow2 value: $time")
     }.launchIn(viewModelScope)
 
-    fun collectLatestFlow(observers: (Int)->Unit)= viewModelScope.launch{
-        countDownFlow.collectLatest{time ->
+    fun collectLatestFlow(observers: (Int) -> Unit) = viewModelScope.launch {
+        countDownFlow.collectLatest { time ->
             delay(1500L)
             observers(time)
         }
@@ -85,9 +88,9 @@ class MainViewModel: ViewModel() {
      * Terminal Flow operators
      */
 
-    fun collectCountFlow()= viewModelScope.launch{
+    fun collectCountFlow() = viewModelScope.launch {
         val count = countDownFlow
-            .filter {time ->
+            .filter { time ->
                 time % 2 == 0
             }
             .map { time ->
@@ -112,7 +115,7 @@ class MainViewModel: ViewModel() {
              * operation to current accumulator value and each element.
              * Throws NoSuchElementException if flow was empty.
              */
-            .reduce{ accumulator, value ->
+            .reduce { accumulator, value ->
                 accumulator + value
             }
         println(reduceResult)
@@ -124,7 +127,7 @@ class MainViewModel: ViewModel() {
              * Accumulates value starting with initial value and
              * applying operation current accumulator value and each element
              */
-            .fold(100){ accumulator, value ->
+            .fold(100) { accumulator, value ->
                 accumulator + value
             }
         println(reduceResult)
@@ -144,31 +147,31 @@ class MainViewModel: ViewModel() {
          * that returns another flow, and then concatenating and flattening these flows.
          * This method is a shortcut for map(transform).flattenConcat().
          */
-        flow1.flatMapConcat {value ->
+        flow1.flatMapConcat { value ->
             flow {
-                emit(value+1)
+                emit(value + 1)
                 delay(500L)
-                emit(value+2)
+                emit(value + 2)
             }
-        }.collect{ value ->
+        }.collect { value ->
             println(value)
         }
     }
 
     fun collectFlatteningFlow2() = viewModelScope.launch {
         val flow1 = (1..5).asFlow()
-        flow1.flatMapConcat {id ->
+        flow1.flatMapConcat { id ->
             /**
              * Concat do this transform one by one id
              */
             getProductById(id)
-        }.collect{ value ->
+        }.collect { value ->
             println(value)
         }
     }
 
     private fun getProductById(id: Int): Flow<String> = flow {
-        val product = when(id){
+        val product = when (id) {
             1 -> "Jabon"
             2 -> "Sopa"
             3 -> "Cereal"
@@ -185,12 +188,12 @@ class MainViewModel: ViewModel() {
          * Transforms elements emitted by the original flow by applying transform,
          * that returns another flow, and then merging and flattening these flows.
          */
-        flow1.flatMapMerge {id ->
+        flow1.flatMapMerge { id ->
             /**
              * Merge do this transform for all ids at onces
              */
             getProductById(id)
-        }.collect{ value ->
+        }.collect { value ->
             println(value)
         }
     }
@@ -204,12 +207,12 @@ class MainViewModel: ViewModel() {
          * When the original flow emits a new value,
          * the previous flow produced by transform block is cancelled.
          */
-        flow1.flatMapLatest {id ->
+        flow1.flatMapLatest { id ->
             /**
              * Has the same behavor of collectLatest
              */
             getProductById(id)
-        }.collect{ value ->
+        }.collect { value ->
             println(value)
         }
     }
@@ -233,9 +236,9 @@ class MainViewModel: ViewModel() {
              * capacity and runs collector in a separate coroutine
              */
             .buffer()
-            .collect{ value ->
-            println(value)
-        }
+            .collect { value ->
+                println(value)
+            }
     }
 
     fun collectConflateFlow() = viewModelScope.launch {
@@ -256,7 +259,7 @@ class MainViewModel: ViewModel() {
              * to a slow collector, but collector always gets the most recent value emitted.
              */
             .conflate()
-            .collect{ value ->
+            .collect { value ->
                 println(value)
             }
     }
@@ -277,7 +280,7 @@ class MainViewModel: ViewModel() {
      */
     val stateFlow = _stateFlow.asStateFlow()
 
-    fun incrementCounter(){
+    fun incrementCounter() {
         _stateFlow.value += 1
     }
 
@@ -286,14 +289,14 @@ class MainViewModel: ViewModel() {
 
     init {
         viewModelScope.launch {
-            sharedFlow.collect{
+            sharedFlow.collect {
                 delay(2000L)
                 println("First collector: Number is $it")
             }
         }
 
         viewModelScope.launch {
-            sharedFlow.collect{
+            sharedFlow.collect {
                 delay(3000L)
                 println("Second collector: Number is $it")
             }
@@ -301,8 +304,18 @@ class MainViewModel: ViewModel() {
         squareNumber(3)
     }
 
-    fun squareNumber(number: Int) = viewModelScope.launch{
-        _sharedFlow.emit(number*number)
+    fun squareNumber(number: Int) = viewModelScope.launch {
+        _sharedFlow.emit(number * number)
     }
+
+    private val _stateFlow2 = MutableStateFlow("10")
+
+    /**
+     * Returns a Flow whose values are generated by transform function that
+     * process the most recently emitted values by each flow.
+     */
+    val combineText = combine(_stateFlow, _stateFlow2) { one: Int, two: String ->
+        "One value is $one and second value is $two"
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
 }

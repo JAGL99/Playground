@@ -14,25 +14,31 @@ import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
-    private val viewModel:MainViewModel by viewModels()
+    private val viewModel: MainViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         val textView = findViewById<TextView>(R.id.tv_message)
         val btnClick = findViewById<Button>(R.id.btn_click)
 
-        collectLatestLifecycleFlow(viewModel.stateFlow){ number ->
+        collectLatestLifecycleFlow(viewModel.stateFlow) { number ->
             textView.text = "Counter $number"
         }
 
-        /*lifecycleScope.launch {
+        collectLatestLifecycleFlow(viewModel.combineText) { combinedText ->
+            println(combinedText)
+        }
+
+        /* Other way
+        lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED){
                 viewModel.stateFlow.collectLatest{number ->
 
                     textView.text = "Counter $number"
                 }
             }
-        }*/
+        }
+        */
 
 
 
@@ -45,14 +51,14 @@ class MainActivity : AppCompatActivity() {
 }
 
 
-fun <T> AppCompatActivity.collectLatestLifecycleFlow(flow: Flow<T>, collect: suspend (T)->Unit){
+fun <T> AppCompatActivity.collectLatestLifecycleFlow(flow: Flow<T>, collect: suspend (T) -> Unit) {
     lifecycleScope.launch {
         /**
          * LifecycleOwner's extension function for Lifecycle.
          * repeatOnLifecycle to allow an easier call to the API
          * from LifecycleOwners such as Activities and Fragments.
          */
-        repeatOnLifecycle(Lifecycle.State.STARTED){
+        repeatOnLifecycle(Lifecycle.State.STARTED) {
             flow.collectLatest { collect(it) }
         }
     }
